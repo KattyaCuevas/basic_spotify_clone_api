@@ -66,6 +66,9 @@ GEM
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
+    benchmark-ips (2.10.0)
+    benchmark-memory (0.2.0)
+      memory_profiler (~> 1)
     bootsnap (1.10.3)
       msgpack (~> 1.2)
     builder (3.2.4)
@@ -76,6 +79,8 @@ GEM
       reline (>= 0.2.7)
     digest (3.1.0)
     erubi (1.10.0)
+    faker (2.19.0)
+      i18n (>= 1.6, < 2)
     globalid (1.0.0)
       activesupport (>= 5.0)
     i18n (1.10.0)
@@ -90,6 +95,7 @@ GEM
     mail (2.7.1)
       mini_mime (>= 0.1.1)
     marcel (1.0.2)
+    memory_profiler (1.0.0)
     method_source (1.0.0)
     mini_mime (1.1.2)
     minitest (5.15.0)
@@ -162,8 +168,11 @@ PLATFORMS
   arm64-darwin-21
 
 DEPENDENCIES
+  benchmark-ips
+  benchmark-memory
   bootsnap
   debug
+  faker
   puma (~> 5.0)
   rails (~> 7.0.2, >= 7.0.2.2)
   sqlite3 (~> 1.4)
