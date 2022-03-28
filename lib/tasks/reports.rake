@@ -1,9 +1,9 @@
-require "benchmark"
-require "benchmark-memory"
-require "benchmark/ips"
+require 'benchmark'
+require 'benchmark-memory'
+require 'benchmark/ips'
 
 namespace :reports do
-  desc "First Report: Highest rating in albums"
+  desc 'First Report: Highest rating in albums'
 
   def rating_ar_ruby
     Album.includes(:ratings).map { |album| album.ratings.length }.max
@@ -11,44 +11,44 @@ namespace :reports do
 
   def rating_only_ar
     Album.from(Album.select(
-      "albums.*", "COUNT(ratings.id) AS rating_count"
-    ).joins(:ratings).group("albums.id")).maximum("rating_count")
+      'albums.*', 'COUNT(ratings.id) AS rating_count'
+    ).joins(:ratings).group('albums.id')).maximum('rating_count')
   end
 
   task first: :environment do
-    puts "--- Elapsed Time ----------------------"
+    puts '--- Elapsed Time ----------------------'
     Benchmark.bmbm do |x|
-      x.report("Active Record + Ruby code") { rating_ar_ruby }
-      x.report("Only Active Record") { rating_only_ar }
+      x.report('Active Record + Ruby code') { rating_ar_ruby }
+      x.report('Only Active Record') { rating_only_ar }
     end
 
-    puts "--- Memory ----------------------------"
+    puts '--- Memory ----------------------------'
     Benchmark.memory do |x|
-      x.report("Active Record + Ruby code") { rating_ar_ruby }
-      x.report("Only Active Record") { rating_only_ar }
+      x.report('Active Record + Ruby code') { rating_ar_ruby }
+      x.report('Only Active Record') { rating_only_ar }
       x.compare!
     end
 
-    puts "--- Iterations per Second -------------"
+    puts '--- Iterations per Second -------------'
     Benchmark.ips do |x|
-      x.report("Active Record + Ruby code") { rating_ar_ruby }
-      x.report("Only Active Record") { rating_only_ar }
+      x.report('Active Record + Ruby code') { rating_ar_ruby }
+      x.report('Only Active Record') { rating_only_ar }
       x.compare!
     end
   end
 
-  desc "Second Report: Top 10 rated songs"
+  desc 'Second Report: Top 10 rated songs'
 
   def first_solution(n)
-    ratings = Rating.where(votable_type: "Song").group(:votable_id).average(:vote)
+    ratings = Rating.where(votable_type: 'Song').group(:votable_id).average(:vote)
                     .sort_by { |r| -r[1] }.take(n).to_h
     songs = Song.includes(:artists).find(ratings.keys)
     ratings.map do |song_id, rating|
-      song = songs.find { |song| song.id == song_id }
+      song = songs.find { |s| s.id == song_id }
       {
         id: song.id,
         song: song.title,
-        artist: song.artists.map(&:name).join(", "),
+        artist: song.artists.map(&:name).join(', '),
         rating_avg: rating.to_f
       }
     end
@@ -56,25 +56,25 @@ namespace :reports do
 
   def second_solution(n)
     Song.includes(:artists).joins(:ratings)
-        .select("songs.*, AVG(ratings.vote) as rating_avg")
-        .group("songs.id").order("rating_avg DESC").limit(n)
+        .select('songs.*, AVG(ratings.vote) as rating_avg')
+        .group('songs.id').order('rating_avg DESC').limit(n)
         .map do |song|
           {
             song: song.title,
-            artist: song.artists.map(&:name).join(", "),
+            artist: song.artists.map(&:name).join(', '),
             rating_avg: song.rating_avg
           }
         end
   end
 
   def third_solution(n)
-    ratings = Rating.select("ratings.votable_id, AVG(ratings.vote) as rating_avg")
-                    .where(votable_type: "Song")
-                    .group(:votable_id).order("rating_avg DESC").limit(n)
+    ratings = Rating.select('ratings.votable_id, AVG(ratings.vote) as rating_avg')
+                    .where(votable_type: 'Song')
+                    .group(:votable_id).order('rating_avg DESC').limit(n)
     Song.includes(:artists).find(ratings.map(&:votable_id)).map do |song|
       {
         song: song.title,
-        artist: song.artists.map(&:name).join(", "),
+        artist: song.artists.map(&:name).join(', '),
         rating_avg: ratings.find { |rating| rating.votable_id == song.id }.rating_avg
       }
     end
@@ -84,26 +84,26 @@ namespace :reports do
     p first_solution(n)
     p second_solution(n)
     p third_solution(n)
-    puts "--- Elapsed Time ----------------------"
+    puts '--- Elapsed Time ----------------------'
     Benchmark.bmbm do |x|
-      x.report("Active Record + Ruby code") { first_solution(n) }
-      x.report("Only Active Record") { second_solution(n) }
-      x.report("Active Record + Ruby code v2") { third_solution(n) }
+      x.report('Active Record + Ruby code') { first_solution(n) }
+      x.report('Only Active Record') { second_solution(n) }
+      x.report('Active Record + Ruby code v2') { third_solution(n) }
     end
 
-    puts "--- Memory ----------------------------"
+    puts '--- Memory ----------------------------'
     Benchmark.memory do |x|
-      x.report("Active Record + Ruby code") { first_solution(n) }
-      x.report("Only Active Record") { second_solution(n) }
-      x.report("Active Record + Ruby code v2") { third_solution(n) }
+      x.report('Active Record + Ruby code') { first_solution(n) }
+      x.report('Only Active Record') { second_solution(n) }
+      x.report('Active Record + Ruby code v2') { third_solution(n) }
       x.compare!
     end
 
-    puts "--- Iterations per Second -------------"
+    puts '--- Iterations per Second -------------'
     Benchmark.ips do |x|
-      x.report("Active Record + Ruby code") { first_solution(n) }
-      x.report("Only Active Record") { second_solution(n) }
-      x.report("Active Record + Ruby code v2") { third_solution(n) }
+      x.report('Active Record + Ruby code') { first_solution(n) }
+      x.report('Only Active Record') { second_solution(n) }
+      x.report('Active Record + Ruby code v2') { third_solution(n) }
       x.compare!
     end
   end
