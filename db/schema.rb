@@ -10,7 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_02_25_163208) do
+ActiveRecord::Schema[7.0].define(version: 2022_03_29_151341) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table "albums", force: :cascade do |t|
     t.string "title"
     t.datetime "created_at", null: false
@@ -25,19 +28,16 @@ ActiveRecord::Schema[7.0].define(version: 2022_02_25_163208) do
   end
 
   create_table "association", force: :cascade do |t|
-    t.integer "song_id"
-    t.integer "artist_id"
-    t.integer "album_id"
-    t.index ["album_id"], name: "index_association_on_album_id"
-    t.index ["artist_id"], name: "index_association_on_artist_id"
-    t.index ["song_id"], name: "index_association_on_song_id"
+    t.bigint "song_id"
+    t.bigint "artist_id"
+    t.bigint "album_id"
   end
 
   create_table "ratings", force: :cascade do |t|
-    t.integer "user_id", null: false
+    t.bigint "user_id", null: false
     t.integer "vote", default: 0
     t.string "votable_type"
-    t.integer "votable_id"
+    t.bigint "votable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_ratings_on_user_id"
@@ -60,4 +60,43 @@ ActiveRecord::Schema[7.0].define(version: 2022_02_25_163208) do
   end
 
   add_foreign_key "ratings", "users"
+
+  create_view "song_ratings", sql_definition: <<-SQL
+      SELECT songs_ratings.id,
+      songs_ratings.title,
+      songs_ratings.rating,
+      albums.id AS album_id,
+      albums.title AS album_title,
+      artists.id AS artist_id,
+      artists.name AS artists_name
+     FROM (((( SELECT songs.id,
+              songs.title,
+              avg(ratings.vote) AS rating
+             FROM (ratings
+               JOIN songs ON ((ratings.votable_id = songs.id)))
+            WHERE ((ratings.votable_type)::text = 'Song'::text)
+            GROUP BY ratings.votable_id, songs.id) songs_ratings
+       JOIN association ON ((association.song_id = songs_ratings.id)))
+       JOIN albums ON ((association.album_id = albums.id)))
+       JOIN artists ON ((association.artist_id = artists.id)));
+  SQL
+  create_view "song_ratings_views", materialized: true, sql_definition: <<-SQL
+      SELECT songs_ratings.id,
+      songs_ratings.title,
+      songs_ratings.rating,
+      albums.id AS album_id,
+      albums.title AS album_title,
+      artists.id AS artist_id,
+      artists.name AS artists_name
+     FROM (((( SELECT songs.id,
+              songs.title,
+              avg(ratings.vote) AS rating
+             FROM (ratings
+               JOIN songs ON ((ratings.votable_id = songs.id)))
+            WHERE ((ratings.votable_type)::text = 'Song'::text)
+            GROUP BY ratings.votable_id, songs.id) songs_ratings
+       JOIN association ON ((association.song_id = songs_ratings.id)))
+       JOIN albums ON ((association.album_id = albums.id)))
+       JOIN artists ON ((association.artist_id = artists.id)));
+  SQL
 end

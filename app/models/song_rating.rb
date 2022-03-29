@@ -1,0 +1,2 @@
+class SongRating < ApplicationRecord
+end

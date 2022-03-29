@@ -16,11 +16,14 @@ namespace :reports do
   end
 
   task first: :environment do
+    puts "\n\n\n"
     puts '--- Elapsed Time ----------------------'
     Benchmark.bmbm do |x|
       x.report('Active Record + Ruby code') { rating_ar_ruby }
       x.report('Only Active Record') { rating_only_ar }
     end
+
+    puts "\n\n\n"
 
     puts '--- Memory ----------------------------'
     Benchmark.memory do |x|
@@ -28,6 +31,8 @@ namespace :reports do
       x.report('Only Active Record') { rating_only_ar }
       x.compare!
     end
+
+    puts "\n\n\n"
 
     puts '--- Iterations per Second -------------'
     Benchmark.ips do |x|
@@ -81,9 +86,7 @@ namespace :reports do
   end
 
   def measure(n)
-    p first_solution(n)
-    p second_solution(n)
-    p third_solution(n)
+    puts "\n\n\n"
     puts '--- Elapsed Time ----------------------'
     Benchmark.bmbm do |x|
       x.report('Active Record + Ruby code') { first_solution(n) }
@@ -91,6 +94,7 @@ namespace :reports do
       x.report('Active Record + Ruby code v2') { third_solution(n) }
     end
 
+    puts "\n\n\n"
     puts '--- Memory ----------------------------'
     Benchmark.memory do |x|
       x.report('Active Record + Ruby code') { first_solution(n) }
@@ -99,6 +103,7 @@ namespace :reports do
       x.compare!
     end
 
+    puts "\n\n\n"
     puts '--- Iterations per Second -------------'
     Benchmark.ips do |x|
       x.report('Active Record + Ruby code') { first_solution(n) }
@@ -110,5 +115,45 @@ namespace :reports do
 
   task second: :environment do
     measure(10)
+  end
+
+
+  desc 'Third Report: The final report'
+
+  def using_views(n)
+    SongRating.order(:rating).limit(n).select(:title, :artists_name, :rating)
+  end
+
+  def using_materialized_views(n)
+    SongRatingsView.order(:rating).limit(n).select(:title, :artists_name, :rating)
+  end
+
+  task third: :environment do
+    n = 10
+    puts "\n\n\n"
+    puts '--- Elapsed Time ----------------------'
+    Benchmark.bmbm do |x|
+      x.report('Active Record + Ruby code') { third_solution(n) }
+      x.report('SQL View') { using_views(n) }
+      x.report('Materialized View') { using_materialized_views(n) }
+    end
+
+    puts "\n\n\n"
+    puts '--- Memory ----------------------------'
+    Benchmark.memory do |x|
+      x.report('Active Record + Ruby code') { third_solution(n) }
+      x.report('SQL View') { using_views(n) }
+      x.report('Materialized View') { using_materialized_views(n) }
+      x.compare!
+    end
+
+    puts "\n\n\n"
+    puts '--- Iterations per Second -------------'
+    Benchmark.ips do |x|
+      x.report('Active Record + Ruby code') { third_solution(n) }
+      x.report('SQL View') { using_views(n) }
+      x.report('Materialized View') { using_materialized_views(n) }
+      x.compare!
+    end
   end
 end
